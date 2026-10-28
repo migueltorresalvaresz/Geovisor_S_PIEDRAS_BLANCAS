@@ -1,0 +1,251 @@
+﻿<!doctype html>
+<!-- GEOVISOR.HTML · Estructura de la página. Estilos: Formato.css · Lógica: Visor.js -->
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Geovisor Santa Elena · Vereda Piedras Blancas</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-minimap/3.6.1/Control.MiniMap.min.css"
+    />
+    <link rel="stylesheet" href="Formato.css?v=20261027-layout-designer" />
+  </head>
+  <body>
+    <noscript
+      ><p style="padding: 12px; background: #fde8e8">
+        Activa JavaScript para usar el geovisor.
+      </p></noscript
+    >
+    <div class="flag"></div>
+    <header>
+      <button class="btn" id="tg" title="Mostrar u ocultar el panel">☰ Panel</button>
+      <h1>GEOVISOR SANTA ELENA<small>Vereda Piedras Blancas · Medellín, Antioquia</small></h1>
+      <input
+        id="q"
+        class="in"
+        list="dl"
+        placeholder="Buscar predio, lugar o coordenadas (lat, lon)"
+        aria-label="Buscador"
+      /><datalist id="dl"></datalist>
+      <select id="vw" class="in" aria-label="Vistas predefinidas">
+        <option value="v">Vereda Piedras Blancas</option>
+        <option value="a">Parque Arví</option>
+        <option value="c">Corregimiento Santa Elena</option>
+      </select>
+      <span class="sp"></span>
+      <button class="btn" id="openLayout">Diseñar layout</button><button class="btn" id="bm1">Medir</button><button class="btn" id="bpng">Exportar PNG</button
+      ><button class="btn" id="bpdf">Informe PDF</button
+      ><button class="btn" id="themeToggle" type="button" aria-pressed="false">☾ Oscuro</button
+      ><button class="btn pri" id="bhelp">Ayuda</button>
+    </header>
+    <div id="app">
+      <aside>
+        <nav>
+          <button class="on">Capas</button><button>Comparar</button><button>Norma POT</button
+          ><button>Estadísticas</button><button>Análisis</button>
+        </nav>
+        <section class="tab on">
+          <details class="layer-group" open>
+            <summary><span class="group-icon">▧</span><span><b>Mapa de fondo</b><small>Calles, satélite y relieve</small></span></summary>
+            <div class="group-content" id="bm"></div>
+          </details>
+          <details class="layer-group">
+            <summary><span class="group-icon">＋</span><span><b>Agregar información</b><small>Importa tus capas geográficas</small></span></summary>
+            <div class="group-content">
+              <label class="file-label" for="geojsonFile">Cargar una capa GeoJSON</label>
+              <input id="geojsonFile" class="file-input" type="file" accept=".geojson,.json,application/geo+json,application/json" />
+              <p class="nt">Para mostrar una GDB, expórtala primero desde QGIS como GeoJSON y carga el archivo aquí.</p>
+              <div id="userLayerStatus" class="status-box" aria-live="polite">Aún no has agregado una capa.</div>
+            </div>
+          </details>
+          <details class="layer-group" open>
+            <summary><span class="group-icon">☷</span><span><b>Capas temáticas</b><small>Activa o desactiva información</small></span></summary>
+            <div class="group-content">
+              <div id="realDataStatus" class="status-box" aria-live="polite">Cargando límites y construcciones desde DATA…</div>
+              
+              <div class="layer-block">
+                <h3>Usos generales POT 2014 · Piedras Blancas</h3>
+                <div id="k1"></div>
+                <div class="lg" id="lgP"></div>
+                <p class="nt">Capa original de Medellín recortada al límite de la vereda Piedras Blancas, corregimiento de Santa Elena. Selecciona un polígono y pulsa el botón ⌖ junto a +/− para acercarte. También puedes usar el botón del popup.</p>
+              </div>
+              <div class="layer-block">
+                <h3>Límites y construcciones</h3>
+                <div class="map-key" aria-label="Leyenda de límites y construcciones">
+                  <span><i class="key-vereda"></i>Vereda Piedras Blancas</span>
+                  <span><i class="key-corregimiento"></i>Corregimiento Santa Elena</span>
+                  <span><i class="key-construccion"></i>Construcciones</span>
+                </div>
+                <div id="k2"></div>
+              </div>
+            </div>
+          </details>
+        </section>
+        <section class="tab">
+          <h3>Comparación de imágenes satelitales</h3>
+          <p class="nt callout">Selecciona dos versiones del archivo histórico Esri World Imagery Wayback y desliza la cortinilla para comparar el territorio. La fecha indica cuándo se publicó cada versión y puede diferir de la captura de la imagen. La comparación permite observar cambios visibles; por sí sola no clasifica ni confirma el uso legal del suelo.</p>
+          <div id="waybackStatus" class="status-box" aria-live="polite">Buscando imágenes históricas disponibles…</div>
+          <p class="nt"><a id="waybackLink" href="https://livingatlas.arcgis.com/wayback/" target="_blank" rel="noopener noreferrer">Abrir Esri Wayback y consultar fechas con cambios locales</a></p>
+          <label><input type="checkbox" id="sw" disabled /> Activar comparación</label>
+          <div class="row">
+            <label
+              >Imagen izquierda / arriba
+              <select id="yl" class="in"></select></label
+            ><label
+              >Imagen derecha / abajo
+              <select id="yr" class="in"></select
+            ></label>
+          </div>
+          <label><input type="radio" name="o" value="v" checked /> Divisor vertical</label
+          ><label><input type="radio" name="o" value="h" /> Divisor horizontal</label>
+          <p class="nt">
+            Arrastra el control sobre el mapa para comparar las dos imágenes. Elige una fecha en
+            cada lista; las capas POT y de construcciones permanecen visibles encima.
+          </p>
+        </section>
+        <section class="tab">
+          <div id="ficha">
+            <p>
+              Haz clic sobre el mapa para consultar la norma urbanística y ambiental aplicable a ese
+              punto.
+            </p>
+          </div>
+        </section>
+        <section class="tab">
+          <h3>Análisis de construcciones registradas</h3>
+          <p class="nt callout" id="constructionAnalysisStatus">Cargando el análisis de las construcciones de Piedras Blancas…</p>
+          <div class="kg" id="kp"></div>
+          <h3>
+            Construcciones por número de pisos
+          </h3>
+          <canvas id="cb" height="210"></canvas>
+          <h3>Construcciones por tipo registrado</h3>
+          <canvas id="cd" height="240"></canvas>
+          <h3>Distribución por área construida</h3>
+          <canvas id="ca" height="210"></canvas>
+          <p class="nt">Los tipos se presentan con los códigos originales del archivo DATA; no se encontró un catálogo que traduzca esos códigos a nombres.</p>
+        </section>
+        <section class="tab">
+          <h3>Dibujo y medición</h3>
+          <div class="row">
+            <button class="btn" id="dl1">Medir distancia</button
+            ><button class="btn" id="dp">Dibujar polígono</button
+            ><button class="btn" id="dc">Limpiar</button>
+          </div>
+          <h3>Buffer ambiental</h3>
+          <div class="row">
+            <input
+              id="br"
+              type="number"
+              class="in"
+              value="100"
+              min="1"
+              style="width: 90px"
+              aria-label="Radio en metros"
+            />
+            m <button class="btn" id="bb">Aplicar al último dibujo</button>
+          </div>
+          <div id="res">
+            <p class="nt">
+              Dibuja un polígono para calcular su área y la zonificación POT que impacta.
+            </p>
+          </div>
+        </section>
+      </aside>
+      <main id="map">
+        <div
+          id="cort"
+          role="slider"
+          tabindex="0"
+          aria-label="Divisor para comparar imágenes satelitales"
+          aria-valuemin="2"
+          aria-valuemax="98"
+          aria-valuenow="50"
+          aria-valuetext="Mitad de la comparación"
+        ></div>
+        <div id="ban"></div>
+        <div id="demo">Datos de demostración</div>
+        <button id="gps" title="Mi ubicación" aria-label="Mi ubicación">⌖</button>
+        <div id="coords">Lat — · Lon —</div>
+      </main>
+    </div>
+    <dialog id="layoutDialog" class="layout-dialog" aria-labelledby="layoutHeading">
+      <div class="layout-topbar">
+        <div><b id="layoutHeading">Diseñador de layout</b><small>Compón y exporta una lámina cartográfica</small></div>
+        <div class="layout-actions">
+          <button class="btn" id="refreshLayout">Actualizar mapa</button>
+          <button class="btn pri" id="downloadLayout">Descargar PNG</button>
+          <button class="btn" id="closeLayout" aria-label="Cerrar diseñador">Cerrar</button>
+        </div>
+      </div>
+      <div class="layout-workspace">
+        <aside class="layout-settings" aria-label="Opciones del layout">
+          <h2>Contenido</h2>
+          <label for="layoutTitle">Título</label>
+          <input class="in" id="layoutTitle" value="Piedras Blancas · Santa Elena" maxlength="100" />
+          <label for="layoutSubtitle">Subtítulo</label>
+          <input class="in" id="layoutSubtitle" value="Medellín, Antioquia · Mapa temático" maxlength="140" />
+          <label for="layoutOrientation">Orientación del papel</label>
+          <select class="in" id="layoutOrientation"><option value="portrait">A4 vertical</option><option value="landscape">A4 horizontal</option></select>
+          <h2>Elementos cartográficos</h2>
+          <label class="layout-check"><input type="checkbox" id="layoutShowLegend" checked /> Leyenda de capas activas</label>
+          <label class="layout-check"><input type="checkbox" id="layoutShowScale" checked /> Escala gráfica y numérica</label>
+          <label class="layout-check"><input type="checkbox" id="layoutShowNorth" checked /> Flecha norte</label>
+          <label for="layoutSource">Fuentes y notas</label>
+          <textarea class="in" id="layoutSource" rows="4" maxlength="400">Fuente: capas locales DATA y POT Medellín 2014. Fondo cartográfico según la vista seleccionada.</textarea>
+          <p class="nt">El mapa usa la vista y las capas activas del geovisor. Pulsa «Actualizar mapa» después de moverlo o cambiar sus capas.</p>
+          <div id="layoutStatus" class="status-box" aria-live="polite">Preparando vista del mapa…</div>
+        </aside>
+        <div class="layout-preview-area">
+          <article id="layoutPaper" class="layout-paper portrait">
+            <header class="layout-title-block"><div class="layout-eyebrow">GEOVISOR SANTA ELENA</div><h1 id="layoutPreviewTitle"></h1><p id="layoutPreviewSubtitle"></p></header>
+            <div class="layout-map-frame"><img id="layoutMapImage" alt="Vista del mapa y sus capas activas" /><span class="layout-map-placeholder">Actualiza la vista del mapa para iniciar el layout.</span><div class="layout-north"><span>▲</span>N</div></div>
+            <footer class="layout-footer">
+              <section class="layout-legend-block"><h2>Leyenda</h2><div id="layoutLegend"></div></section>
+              <section class="layout-scale-block"><h2>Escala</h2><div id="layoutScaleBar" class="layout-scale-bar"></div><div id="layoutScaleNumber" class="layout-scale-number"></div></section>
+            </footer>
+            <p id="layoutSourcePreview" class="layout-source"></p>
+            <div class="layout-credit">Geovisor Santa Elena · Piedras Blancas, Medellín</div>
+          </article>
+        </div>
+      </div>
+    </dialog>
+    <dialog id="ay">
+      <h3>Ayuda</h3>
+      <p>
+        Busca por nombre de predio, lugar o coordenadas «6.29, -75.49». Haz clic en el mapa para
+        abrir la ficha normativa. Usa <b>Comparar</b> para la cortinilla y <b>Análisis</b> para
+        medir, dibujar y simular buffers. «Informe PDF» abre la impresión del navegador: elige
+        «Guardar como PDF».
+      </p>
+      <p class="nt">
+        <b>Datos de demostración.</b> Las coberturas históricas, los predios y las vías son
+        ilustrativos. Los límites, las construcciones y la capa de usos generales POT 2014
+        provienen de archivos locales; la capa POT está recortada al límite de Piedras Blancas.
+      </p>
+      <form method="dialog"><button class="btn pri">Cerrar</button></form>
+    </dialog>
+    <div id="toast"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-minimap/3.6.1/Control.MiniMap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Turf.js/6.5.0/turf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="Visor.js?v=20261027-layout-designer"></script>
+  </body>
+</html>
